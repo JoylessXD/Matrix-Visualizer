@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ultimate Matrix Arithmetic Playground</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.js"></script>
     <style>
         body {
             margin: 0;
@@ -174,7 +175,7 @@
         }
         .matrix-grid {
             display: grid;
-            grid-template-columns: repeat(2, 70px);
+            grid-template-columns: repeat(2, 95px);
             gap: 10px;
             margin-top: 15px;
             justify-content: center;
@@ -202,15 +203,31 @@
             margin-top: -2px;
             border: 1px solid #282c34;
         }
-        input[type="number"] {
-            width: 60px;
-            padding: 8px;
+        input[type="text"].math-input, .matrix-grid input[type="text"] {
+            width: 85px;
+            padding: 6px;
             background: #1e1e1e;
             border: 1px solid #555;
             color: #fff;
             border-radius: 4px;
+            text-align: left;
+            font-size: 13px;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+        input[type="text"].math-input:focus, .matrix-grid input[type="text"]:focus {
+            border-color: #61afef;
+            outline: none;
+        }
+        input[type="number"].var-num-input {
+            width: 55px;
+            padding: 4px;
+            background: #111;
+            border: 1px solid #444;
+            color: #98c379;
+            font-family: monospace;
+            border-radius: 4px;
             text-align: center;
-            font-size: 16px;
         }
         input[type="color"] {
             border: none;
@@ -268,6 +285,18 @@
             font-size: 13px;
             line-height: 1.4;
         }
+        .vector-legend {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-weight: bold;}
+        .i-hat { color: #e06c75; }
+        .j-hat { color: #61afef; }
+        .custom-v { color: #c678dd; }
+        hr { border: 0; border-top: 1px solid #444; margin: 10px 0; }
+        
         .calc-section {
             background: #252b35;
             border-left: 4px solid #e5c07b;
@@ -312,18 +341,7 @@
             border-color: #e5c07b;
             font-weight: bold;
         }
-        .vector-legend {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .legend-item { display: flex; align-items: center; gap: 6px; font-weight: bold;}
-        .i-hat { color: #e06c75; }
-        .j-hat { color: #61afef; }
-        .custom-v { color: #c678dd; }
-        hr { border: 0; border-top: 1px solid #444; margin: 10px 0; }
-        
+
         select {
             background: #1e1e1e;
             color: #fff;
@@ -389,66 +407,26 @@
                 height: auto;
                 padding: 10px;
             }
-            h1 {
-                font-size: 22px;
-                text-align: center;
-            }
-            p.subtitle {
-                text-align: center;
-                margin-bottom: 15px;
-            }
-            .container {
-                flex-direction: column;
-                align-items: center;
-                gap: 15px;
-                height: auto;
-            }
-            .canvas-area {
-                width: 100%;
-                max-width: 500px;
-                align-items: center;
-            }
-            canvas {
-                width: 100% !important;
-                height: auto !important;
-                max-width: 500px;
-            }
-            .output-info-bar {
-                width: 100%;
-                box-sizing: border-box;
-            }
-            .controls {
-                width: 100%;
-                box-sizing: border-box;
-                height: auto;
-                overflow-y: visible;
-            }
-            .sidebar {
-                width: 100%;
-                box-sizing: border-box;
-                height: auto;
-                overflow-y: visible;
-            }
-            .matrix-header {
-                grid-template-columns: 1fr;
-                gap: 8px;
-            }
-            .btn-remove {
-                justify-self: start;
-                width: 100%;
-                text-align: center;
-            }
-            .config-row {
-                flex-wrap: wrap;
-                gap: 10px;
-            }
+            h1 { font-size: 22px; text-align: center; }
+            p.subtitle { text-align: center; margin-bottom: 15px; }
+            .container { flex-direction: column; align-items: center; gap: 15px; height: auto; }
+            .canvas-area { width: 100%; max-width: 500px; align-items: center; }
+            canvas { width: 100% !important; height: auto !important; max-width: 500px; }
+            .output-info-bar { width: 100%; box-sizing: border-box; }
+            .controls { width: 100%; box-sizing: border-box; height: auto; overflow-y: visible; }
+            .sidebar { width: 100%; box-sizing: border-box; height: auto; overflow-y: visible; }
+            .matrix-header { grid-template-columns: 1fr; gap: 8px; }
+            .btn-remove { justify-self: start; width: 100%; text-align: center; }
+            .config-row { flex-wrap: wrap; gap: 10px; }
+            .matrix-grid { grid-template-columns: repeat(2, 1fr); width: 100%; }
+            input[type="text"].math-input, .matrix-grid input[type="text"] { width: 100%; }
         }
     </style>
 </head>
 <body>
 
     <h1>Linear & Affine Transformation Playground</h1>
-    <p class="subtitle">Interactive drag-and-drop structural node pipeline with user track labels</p>
+    <p class="subtitle">Dynamic expression scope engine with Desmos-style sliding analytical parameters</p>
     
     <div class="container">
         <div class="canvas-area">
@@ -476,14 +454,19 @@
         </div>
 
         <div class="sidebar">
-            <h3 style="margin: 0; color: #98c379; border-bottom: 1px solid #333; padding-bottom: 6px;">Environment Controls</h3>
+            <h3 style="margin: 0; color: #e5c07b; border-bottom: 1px solid #333; padding-bottom: 6px;">Dynamic Variables</h3>
+            <div id="variable-sliders-container" class="config-group" style="gap: 8px; min-height: 45px;">
+                <div style="color: #666; font-size: 12px; font-style: italic;">Type a variable (like 'a' or 'b') inside any matrix node to generate a slider control...</div>
+            </div>
+
+            <h3 style="margin: 5px 0 0 0; color: #98c379; border-bottom: 1px solid #333; padding-bottom: 6px;">Environment Controls</h3>
             
             <div class="config-group">
                 <div class="config-row">
                     <span>Plot Custom Vector [x, y]:</span>
                     <div style="display: flex; gap: 5px;">
-                        <input type="number" id="v_custom_x" value="1" step="0.5" style="width: 45px; padding: 4px; font-size: 14px;">
-                        <input type="number" id="v_custom_y" value="2" step="0.5" style="width: 45px; padding: 4px; font-size: 14px;">
+                        <input type="text" id="v_custom_x" class="math-input" value="1" style="width: 55px; padding: 4px; font-size: 12px; text-align: center;">
+                        <input type="text" id="v_custom_y" class="math-input" value="2" style="width: 55px; padding: 4px; font-size: 12px; text-align: center;">
                     </div>
                 </div>
 
@@ -548,10 +531,10 @@
             <h3 style="margin: 10px 0 0 0; color: #e5c07b; border-bottom: 1px solid #333; padding-bottom: 6px;">Matrix Scratchpad</h3>
             <div style="background: #282c34; padding: 12px; border-radius: 6px; border: 1px solid #444;">
                 <div class="matrix-grid" style="margin-top: 0;">
-                    <input type="number" id="sc_00" value="2" step="0.5">
-                    <input type="number" id="sc_01" value="1" step="0.5">
-                    <input type="number" id="sc_10" value="1" step="0.5">
-                    <input type="number" id="sc_11" value="2" step="0.5">
+                    <input type="text" id="sc_00" value="2">
+                    <input type="text" id="sc_01" value="1">
+                    <input type="text" id="sc_10" value="1">
+                    <input type="text" id="sc_11" value="2">
                 </div>
                 <button id="btn-scratch-calc" class="btn-calc">Compute Matrix Properties</button>
             </div>
@@ -587,6 +570,172 @@
         let globalZoomScale = 1.0;
         let highPrecisionMode = false;
 
+        let globalVariables = {}; 
+        let activeVarsSerialized = "";
+
+        // Universal handler to allow quick adjustments via Mouse Scroll Wheel and Arrow Keys
+        function attachNumericTweaker(inputElement, callback) {
+            inputElement.addEventListener('wheel', (e) => {
+                let val = parseFloat(inputElement.value);
+                if (isNaN(val)) return; 
+                e.preventDefault();
+                let delta = e.deltaY < 0 ? 1 : -1;
+                let step = e.shiftKey ? 1.0 : 0.1;
+                val += delta * step;
+                inputElement.value = parseFloat(val.toFixed(3));
+                callback();
+            }, { passive: false });
+
+            inputElement.addEventListener('keydown', (e) => {
+                if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+                let val = parseFloat(inputElement.value);
+                if (isNaN(val)) return;
+                e.preventDefault();
+                let delta = e.key === 'ArrowUp' ? 1 : -1;
+                let step = e.shiftKey ? 1.0 : 0.1;
+                val += delta * step;
+                inputElement.value = parseFloat(val.toFixed(3));
+                callback();
+            });
+        }
+
+        function evaluateExpression(expr, inputNode = null) {
+            if (!expr || !expr.trim()) {
+                if (inputNode) inputNode.style.backgroundColor = "#1e1e1e";
+                return 0;
+            }
+            let sanitized = expr.toLowerCase()
+                                .replace(/(\d+)degrees/g, '($1 deg)')
+                                .replace(/degrees/g, ' deg');
+            try {
+                let parsedResult = math.evaluate(sanitized, globalVariables);
+                if (parsedResult && typeof parsedResult === 'object' && parsedResult.isUnit) {
+                    parsedResult = parsedResult.toNumber();
+                }
+                if (typeof parsedResult !== 'number' || isNaN(parsedResult)) {
+                    parsedResult = 0;
+                }
+                if (inputNode) inputNode.style.backgroundColor = "#1e1e1e"; 
+                return parsedResult;
+            } catch (err) {
+                if (inputNode) inputNode.style.backgroundColor = "#4b2424"; 
+                return null; 
+            }
+        }
+
+        function updateVariableSliders() {
+            const nodes = document.querySelectorAll('.matrix-grid input[type="text"], #v_custom_x, #v_custom_y');
+            let textPool = "";
+            nodes.forEach(n => textPool += " " + n.value);
+
+            let detectedVars = new Set();
+            const matches = textPool.match(/\b([a-df-hj-z])\b/g); 
+            if (matches) {
+                matches.forEach(v => detectedVars.add(v.toLowerCase()));
+            }
+
+            const sortedVars = Array.from(detectedVars).sort();
+            const serialized = sortedVars.join(",");
+
+            if (serialized !== activeVarsSerialized) {
+                activeVarsSerialized = serialized;
+                let nextGlobalVars = {};
+                sortedVars.forEach(v => {
+                    nextGlobalVars[v] = (v in globalVariables) ? globalVariables[v] : 1.0;
+                });
+                globalVariables = nextGlobalVars;
+                renderSlidersUI();
+            }
+        }
+
+        function renderSlidersUI() {
+            const container = document.getElementById('variable-sliders-container');
+            const varKeys = Object.keys(globalVariables).sort();
+            
+            if (varKeys.length === 0) {
+                container.innerHTML = `<div style="color: #666; font-size: 12px; font-style: italic;">Type a variable (like 'a' or 'b') inside any matrix node to generate a slider control...</div>`;
+                return;
+            }
+            
+            let html = "";
+            varKeys.forEach(v => {
+                const val = globalVariables[v];
+                html += `
+                    <div class="config-row nested-row" style="margin-top: 2px;">
+                        <span style="color: #e5c07b; font-weight: bold; font-family: monospace; font-size: 14px;">${v} = </span>
+                        <input type="number" step="0.1" class="var-num-input" data-var="${v}" value="${parseFloat(val.toFixed(3))}">
+                        <input type="range" min="-10" max="10" step="0.05" class="var-slider-input" data-var="${v}" value="${val}">
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            container.querySelectorAll('.var-slider-input').forEach(slider => {
+                slider.addEventListener('input', (e) => {
+                    const v = e.target.dataset.var;
+                    const val = parseFloat(e.target.value);
+                    globalVariables[v] = val;
+                    container.querySelector(`.var-num-input[data-var="${v}"]`).value = parseFloat(val.toFixed(3));
+                    triggerPipelineAndDraw(true); 
+                });
+            });
+
+            container.querySelectorAll('.var-num-input').forEach(numInp => {
+                const syncValue = () => {
+                    const v = numInp.dataset.var;
+                    const val = parseFloat(numInp.value) || 0;
+                    globalVariables[v] = val;
+                    const matchingSlider = container.querySelector(`.var-slider-input[data-var="${v}"]`);
+                    if (matchingSlider) matchingSlider.value = val;
+                    triggerPipelineAndDraw(true); 
+                };
+
+                numInp.addEventListener('input', syncValue);
+                attachNumericTweaker(numInp, syncValue); 
+            });
+        }
+
+        function getMatrixValuesFromBlock(id) {
+            const cell_00 = document.getElementById(`m${id}_00`);
+            const cell_10 = document.getElementById(`m${id}_10`);
+            const cell_01 = document.getElementById(`m${id}_01`);
+            const cell_11 = document.getElementById(`m${id}_11`);
+
+            let v00 = evaluateExpression(cell_00 ? cell_00.value : "1", cell_00);
+            let v10 = evaluateExpression(cell_10 ? cell_10.value : "0", cell_10);
+            let v01 = evaluateExpression(cell_01 ? cell_01.value : "0", cell_01);
+            let v11 = evaluateExpression(cell_11 ? cell_11.value : "1", cell_11);
+
+            return [
+                v00 !== null ? v00 : 1,
+                v10 !== null ? v10 : 0,
+                v01 !== null ? v01 : 0,
+                v11 !== null ? v11 : 1
+            ];
+        }
+
+        function triggerPipelineAndDraw(instant = false) {
+            matrixPipeline.forEach(item => {
+                if (item.applied) {
+                    item.matrix = getMatrixValuesFromBlock(item.id);
+                }
+            });
+            const updatedSpace = calculateCompositeFromPipeline();
+            
+            if (instant) {
+                currentMatrix = [...updatedSpace];
+                targetMatrix = [...updatedSpace];
+                animationProgress = 1.0;
+                animating = false;
+                document.getElementById('cfg_scrub_slider').value = 1.00;
+                document.getElementById('scrub_readout').innerText = "1.00";
+                draw();
+            } else {
+                startTransition(updatedSpace);
+            }
+            runScratchpadCalculations();
+        }
+
         function multiplyMatrices(A, B) {
             return [
                 A[0]*B[0] + A[2]*B[1], 
@@ -596,13 +745,8 @@
             ];
         }
 
-        function addMatrices(A, B) {
-            return [A[0]+B[0], A[1]+B[1], A[2]+B[2], A[3]+B[3]];
-        }
-
-        function subtractMatrices(A, B) {
-            return [A[0]-B[0], A[1]-B[1], A[2]-B[2], A[3]-B[3]];
-        }
+        function addMatrices(A, B) { return [A[0]+B[0], A[1]+B[1], A[2]+B[2], A[3]+B[3]]; }
+        function subtractMatrices(A, B) { return [A[0]-B[0], A[1]-B[1], A[2]-B[2], A[3]-B[3]]; }
 
         function calculateCompositeFromPipeline() {
             let result = [1, 0, 0, 1];
@@ -631,11 +775,8 @@
                 }
             }
 
-            const formulaTextNode = document.getElementById('live-pipeline-formula');
-            const numericTextNode = document.getElementById('live-matrix-numerical-readout');
-            
-            formulaTextNode.innerText = matrixPipeline.some(p => p.applied) ? logicChainString : "Identity (I)";
-            numericTextNode.innerText = `Matrix: [${result[0].toFixed(2)}, ${result[1].toFixed(2)}, ${result[2].toFixed(2)}, ${result[3].toFixed(2)}]`;
+            document.getElementById('live-pipeline-formula').innerText = matrixPipeline.some(p => p.applied) ? logicChainString : "Identity (I)";
+            document.getElementById('live-matrix-numerical-readout').innerText = `Matrix: [${result[0].toFixed(2)}, ${result[1].toFixed(2)}, ${result[2].toFixed(2)}, ${result[3].toFixed(2)}]`;
 
             return result;
         }
@@ -667,16 +808,8 @@
                 ctx.lineWidth = 1;
                 for (let i = -range; i <= range; i++) {
                     ctx.strokeStyle = i === 0 ? getHexToRgbA(ghostGridColor, ghostOpacityBase * 0.8) : getHexToRgbA(ghostGridColor, ghostOpacityBase * 0.3);
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(i * activeSpacing, -range * activeSpacing);
-                    ctx.lineTo(i * activeSpacing, range * activeSpacing);
-                    ctx.stroke();
-
-                    ctx.beginPath();
-                    ctx.moveTo(-range * activeSpacing, i * activeSpacing);
-                    ctx.lineTo(range * activeSpacing, i * activeSpacing);
-                    ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(i * activeSpacing, -range * activeSpacing); ctx.lineTo(i * activeSpacing, range * activeSpacing); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(-range * activeSpacing, i * activeSpacing); ctx.lineTo(range * activeSpacing, i * activeSpacing); ctx.stroke();
                 }
             }
 
@@ -691,15 +824,8 @@
             ctx.lineWidth = 1;
             for (let i = -range; i <= range; i++) {
                 ctx.strokeStyle = i === 0 ? getHexToRgbA(activeGridColor, activeOpacityBase * 0.7) : getHexToRgbA(activeGridColor, activeOpacityBase * 0.2);
-                ctx.beginPath();
-                ctx.moveTo(i * ix - range * jx, i * iy - range * jy);
-                ctx.lineTo(i * ix + range * jx, i * iy + range * jy);
-                ctx.stroke();
-
-                ctx.beginPath();
-                ctx.moveTo(i * jx - range * ix, i * jy - range * iy);
-                ctx.lineTo(i * jx + range * ix, i * jy + range * iy); // Fix applied here (+ instead of -)
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(i * ix - range * jx, i * iy - range * jy); ctx.lineTo(i * ix + range * jx, i * iy + range * jy); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(i * jx - range * ix, i * jy - range * iy); ctx.lineTo(i * jx + range * ix, i * jy + range * iy); ctx.stroke();
             }
 
             ctx.save();
@@ -707,8 +833,10 @@
             drawVector(0, 0, ix, iy, '#e06c75');
             drawVector(0, 0, jx, jy, '#61afef');
 
-            const vx = parseFloat(document.getElementById('v_custom_x').value) || 0;
-            const vy = parseFloat(document.getElementById('v_custom_y').value) || 0;
+            const vx_node = document.getElementById('v_custom_x');
+            const vy_node = document.getElementById('v_custom_y');
+            const vx = evaluateExpression(vx_node.value, vx_node) || 0;
+            const vy = evaluateExpression(vy_node.value, vy_node) || 0;
 
             const transformed_vx = (currentMatrix[0] * vx + currentMatrix[2] * vy) * activeSpacing;
             const transformed_vy = (currentMatrix[1] * vx + currentMatrix[3] * vy) * activeSpacing;
@@ -720,17 +848,11 @@
 
         function drawVector(fromX, fromY, toX, toY, color) {
             if (Math.abs(toX - fromX) < 0.01 && Math.abs(toY - fromY) < 0.01) return;
-            ctx.strokeStyle = color;
-            ctx.fillStyle = color;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(fromX, fromY);
-            ctx.lineTo(toX, toY);
-            ctx.stroke();
+            ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
 
             const angle = Math.atan2(toY - fromY, toX - fromX);
-            ctx.beginPath();
-            ctx.moveTo(toX, toY);
+            ctx.beginPath(); ctx.moveTo(toX, toY);
             ctx.lineTo(toX - 12 * Math.cos(angle - Math.PI / 6), toY - 12 * Math.sin(angle - Math.PI / 6));
             ctx.lineTo(toX - 12 * Math.cos(angle + Math.PI / 6), toY - 12 * Math.sin(angle + Math.PI / 6));
             ctx.fill();
@@ -745,15 +867,10 @@
 
         function animate() {
             if (!animating) return;
-            
             const mode = document.getElementById('cfg_control_mode').value;
-            if (mode === 'manual') {
-                animating = false;
-                return;
-            }
+            if (mode === 'manual') { animating = false; return; }
 
-            const isInstant = document.getElementById('cfg_instant').checked;
-            if (isInstant) {
+            if (document.getElementById('cfg_instant').checked) {
                 animationProgress = 1;
             } else {
                 const speedMultiplier = parseFloat(document.getElementById('cfg_speed_slider').value) || 1.0;
@@ -761,8 +878,7 @@
             }
             
             if (animationProgress >= 1) {
-                animationProgress = 1;
-                animating = false;
+                animationProgress = 1; animating = false;
                 currentMatrix = [...targetMatrix];
                 document.getElementById('cfg_scrub_slider').value = 1.00;
                 document.getElementById('scrub_readout').innerText = "1.00";
@@ -771,14 +887,12 @@
                 document.getElementById('cfg_scrub_slider').value = animationProgress.toFixed(2);
                 document.getElementById('scrub_readout').innerText = animationProgress.toFixed(2);
             }
-            
             draw();
             if (animating) requestAnimationFrame(animate);
         }
 
         function startTransition(toMatrix) {
             const mode = document.getElementById('cfg_control_mode').value;
-            
             if(mode === 'time') {
                 startMatrix = [...currentMatrix];
                 targetMatrix = toMatrix;
@@ -808,10 +922,11 @@
         }
 
         function runScratchpadCalculations() {
-            const a = parseFloat(document.getElementById('sc_00').value) || 0;
-            const b = parseFloat(document.getElementById('sc_01').value) || 0;
-            const c = parseFloat(document.getElementById('sc_10').value) || 0;
-            const d = parseFloat(document.getElementById('sc_11').value) || 0;
+            const node00 = document.getElementById('sc_00'); const node01 = document.getElementById('sc_01');
+            const node10 = document.getElementById('sc_10'); const node11 = document.getElementById('sc_11');
+
+            const a = evaluateExpression(node00.value, node00) || 0; const b = evaluateExpression(node01.value, node01) || 0;
+            const c = evaluateExpression(node10.value, node10) || 0; const d = evaluateExpression(node11.value, node11) || 0;
 
             const det = (a * d) - (b * c);
             document.getElementById('calc-det').innerText = `det(M) = ${formatValue(det)}`;
@@ -819,33 +934,20 @@
             if (Math.abs(det) < 0.00001) {
                 document.getElementById('calc-inv').innerText = "Matrix Singular\n(No Inverse exists!)";
             } else {
-                const inv_a = d / det;
-                const inv_b = -b / det;
-                const inv_c = -c / det;
-                const inv_d = a / det;
-                document.getElementById('calc-inv').innerHTML = `[${formatValue(inv_a)}, ${formatValue(inv_b)}]<br>[${formatValue(inv_c)}, ${formatValue(inv_d)}]`;
+                document.getElementById('calc-inv').innerHTML = `[${formatValue(d / det)}, ${formatValue(-b / det)}]<br>[${formatValue(-c / det)}, ${formatValue(a / det)}]`;
             }
 
             const trace = a + d;
             const discriminant = (trace * trace) - (4 * det);
-            let l1 = 0, l2 = 0;
-            let valStr = "";
-            let vecStr = "";
+            let l1 = 0, l2 = 0; let valStr = ""; let vecStr = "";
 
             if (discriminant > 0.00001) {
-                l1 = (trace + Math.sqrt(discriminant)) / 2;
-                l2 = (trace - Math.sqrt(discriminant)) / 2;
-                valStr += `λ₁ = ${formatValue(l1)}\n`;
-                valStr += `λ₂ = ${formatValue(l2)}`;
+                l1 = (trace + Math.sqrt(discriminant)) / 2; l2 = (trace - Math.sqrt(discriminant)) / 2;
+                valStr += `λ₁ = ${formatValue(l1)}\nλ₂ = ${formatValue(l2)}`;
             } else if (Math.abs(discriminant) <= 0.00001) {
-                l1 = trace / 2;
-                l2 = l1;
-                valStr += `λ₁ = λ₂ = ${formatValue(l1)}`;
+                l1 = trace / 2; l2 = l1; valStr += `λ₁ = λ₂ = ${formatValue(l1)}`;
             } else {
-                const realPart = trace / 2;
-                const imagPart = Math.sqrt(-discriminant) / 2;
-                valStr += `λ₁ = ${formatValue(realPart)} + ${formatValue(imagPart)}i\n`;
-                valStr += `λ₂ = ${formatValue(realPart)} - ${formatValue(imagPart)}i`;
+                valStr += `λ₁ = ${formatValue(trace / 2)} + ${formatValue(Math.sqrt(-discriminant) / 2)}i\nλ₂ = ${formatValue(trace / 2)} - ${formatValue(Math.sqrt(-discriminant) / 2)}i`;
                 document.getElementById('calc-eigenvals').innerText = valStr;
                 document.getElementById('calc-eigenvecs').innerText = "v₁ = Complex Direction\nv₂ = Complex Direction";
                 return;
@@ -856,112 +958,66 @@
                 let x = 0, y = 0;
                 if (Math.abs(c) > 0.00001) { x = lambda - d; y = c; } 
                 else if (Math.abs(b) > 0.00001) { x = b; y = lambda - a; } 
-                else {
-                    if (Math.abs(lambda - a) < 0.00001) return [1.00, 0.00];
-                    else return [0.00, 1.00];
-                }
-                const absX = Math.abs(x), absY = Math.abs(y);
-                const scaleFactor = (absX > 0.00001 && (absX <= absY || absY < 0.00001)) ? absX : absY;
+                else { return (Math.abs(lambda - a) < 0.00001) ? [1.00, 0.00] : [0.00, 1.00]; }
+                const scaleFactor = (Math.abs(x) > 0.00001 && (Math.abs(x) <= Math.abs(y) || Math.abs(y) < 0.00001)) ? Math.abs(x) : Math.abs(y);
                 if (scaleFactor > 0.00001) { x /= scaleFactor; y /= scaleFactor; }
-                if (Math.abs(x) < 0.00001) x = 0;
-                if (Math.abs(y) < 0.00001) y = 0;
-                return [x, y];
+                return [Math.abs(x) < 0.00001 ? 0 : x, Math.abs(y) < 0.00001 ? 0 : y];
             }
 
             if (Math.abs(discriminant) <= 0.00001) {
-                if (Math.abs(b) < 0.00001 && Math.abs(c) < 0.00001) {
-                    vecStr = `v₁ = [1.00, 0.00]\nv₂ = [0.00, 1.00]\n(All invariant)`;
-                } else {
-                    const v1 = calculateIntegerVector(l1);
-                    vecStr = `v₁ = [${formatValue(v1[0])}, ${formatValue(v1[1])}]\nv₂ = None (Shear Degeneracy)`;
-                }
+                if (Math.abs(b) < 0.00001 && Math.abs(c) < 0.00001) vecStr = `v₁ = [1.00, 0.00]\nv₂ = [0.00, 1.00]\n(All invariant)`;
+                else vecStr = `v₁ = [${formatValue(calculateIntegerVector(l1)[0])}, ${formatValue(calculateIntegerVector(l1)[1])}]\nv₂ = None (Shear Degeneracy)`;
             } else {
-                const v1 = calculateIntegerVector(l1);
-                const v2 = calculateIntegerVector(l2);
-                vecStr += `v₁ = [${formatValue(v1[0])}, ${formatValue(v1[1])}]\n`;
-                vecStr += `v₂ = [${formatValue(v2[0])}, ${formatValue(v2[1])}]`;
+                vecStr += `v₁ = [${formatValue(calculateIntegerVector(l1)[0])}, ${formatValue(calculateIntegerVector(l1)[1])}]\nv₂ = [${formatValue(calculateIntegerVector(l2)[0])}, ${formatValue(calculateIntegerVector(l2)[1])}]`;
             }
             document.getElementById('calc-eigenvecs').innerText = vecStr;
         }
 
         function initDragAndDropSupport() {
             const container = document.getElementById('matrix-container');
-            
             container.addEventListener('dragstart', (e) => {
-                const targetBlock = e.target.closest('.matrix-input-group');
-                if(!targetBlock) return;
-                targetBlock.classList.add('dragging');
-                e.dataTransfer.setData('text/plain', targetBlock.id);
+                const targetBlock = e.target.closest('.matrix-input-group'); if(!targetBlock) return;
+                targetBlock.classList.add('dragging'); e.dataTransfer.setData('text/plain', targetBlock.id);
             });
-
             container.addEventListener('dragend', (e) => {
-                const targetBlock = e.target.closest('.matrix-input-group');
-                if(targetBlock) targetBlock.classList.remove('dragging');
+                const targetBlock = e.target.closest('.matrix-input-group'); if(targetBlock) targetBlock.classList.remove('dragging');
                 rebuildPipelineSequenceFromDOM();
             });
-
             container.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                const draggingElement = container.querySelector('.dragging');
-                if(!draggingElement) return;
-
+                e.preventDefault(); const draggingElement = container.querySelector('.dragging'); if(!draggingElement) return;
                 const afterElement = getDragAfterElement(container, e.clientY);
-                if (afterElement == null) {
-                    container.appendChild(draggingElement);
-                } else {
-                    container.insertBefore(draggingElement, afterElement);
-                }
+                if (afterElement == null) container.appendChild(draggingElement);
+                else container.insertBefore(draggingElement, afterElement);
             });
         }
 
         function getDragAfterElement(container, y) {
             const draggableElements = [...container.querySelectorAll('.matrix-input-group:not(.dragging)')];
-            
             return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
+                const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+                else return closest;
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
         function rebuildPipelineSequenceFromDOM() {
             const container = document.getElementById('matrix-container');
             const DOMBlocks = [...container.querySelectorAll('.matrix-input-group')];
-            
             let newReorderedPipeline = [];
             DOMBlocks.forEach((blockNode) => {
                 const parsedId = parseInt(blockNode.id.replace('group-m', ''));
                 const originalObjectReference = matrixPipeline.find(p => p.id === parsedId);
-                if(originalObjectReference) {
-                    newReorderedPipeline.push(originalObjectReference);
-                }
+                if(originalObjectReference) newReorderedPipeline.push(originalObjectReference);
             });
-            
-            matrixPipeline = newReorderedPipeline;
-            reindexPipelineBlocks();
-            
-            const targetSpace = calculateCompositeFromPipeline();
-            startTransition(targetSpace);
+            matrixPipeline = newReorderedPipeline; reindexPipelineBlocks();
+            triggerPipelineAndDraw(false);
         }
 
         function addNewMatrixBlock() {
-            uniqueIdCounter++;
-            const internalId = uniqueIdCounter;
-            const assignedDisplayIndex = matrixPipeline.length + 1;
-
+            uniqueIdCounter++; const internalId = uniqueIdCounter; const assignedDisplayIndex = matrixPipeline.length + 1;
             const container = document.getElementById('matrix-container');
             const group = document.createElement('div');
-            group.className = 'matrix-input-group';
-            group.id = `group-m${internalId}`;
-            group.draggable = true;
-            
-            let d00=1, d01=0, d10=0, d11=1;
-            if (assignedDisplayIndex === 1) { d10 = 1; } 
-            if (assignedDisplayIndex === 2) { d00 = 0; d01 = -1; d10 = 1; d11 = 0; } 
+            group.className = 'matrix-input-group'; group.id = `group-m${internalId}`; group.draggable = true;
             
             group.innerHTML = `
                 <div class="matrix-header" id="header-m${internalId}">
@@ -971,7 +1027,7 @@
                         <span class="display-index-label" style="white-space:nowrap; margin-right:2px;">M<sub>${assignedDisplayIndex}</sub></span>
                         <input type="text" id="m${internalId}_label" class="custom-label-input" placeholder="Label..." maxlength="16">
                         <select class="op-select" id="m${internalId}_op">
-                            <option value="multiply">Multiply (×</option>
+                            <option value="multiply">Multiply (×)</option>
                             <option value="add">Add (+)</option>
                             <option value="subtract">Subtract (-)</option>
                         </select>
@@ -980,12 +1036,11 @@
                 </div>
                 <div class="matrix-content-wrapper" id="content-m${internalId}" style="max-height: 250px;">
                     <div class="matrix-grid">
-                        <input type="number" id="m${internalId}_00" value="${d00}" step="0.5">
-                        <input type="number" id="m${internalId}_01" value="${d01}" step="0.5">
-                        <input type="number" id="m${internalId}_10" value="${d10}" step="0.5">
-                        <input type="number" id="m${internalId}_11" value="${d11}" step="0.5">
+                        <input type="text" id="m${internalId}_00" value="1">
+                        <input type="text" id="m${internalId}_01" value="0">
+                        <input type="text" id="m${internalId}_10" value="0">
+                        <input type="text" id="m${internalId}_11" value="1">
                     </div>
-                    
                     <div class="invert-control-row" id="m${internalId}_inv_row">
                         <span style="font-weight: 500;">Invert Matrix Values (M<sub>${assignedDisplayIndex}</sub><sup>-1</sup>)</span>
                         <label class="switch">
@@ -996,32 +1051,19 @@
                     <button id="btn-apply-m${internalId}" class="btn-apply" style="margin-top:15px;">Push Operation to Stack</button>
                 </div>
             `;
-            
             container.appendChild(group);
 
             matrixPipeline.push({
-                id: internalId,
-                displayIndex: assignedDisplayIndex,
-                op: 'multiply', 
-                label: '',
-                matrix: [1, 0, 0, 1],
-                originalBackup: null, 
-                applied: false,
-                collapsed: false
+                id: internalId, displayIndex: assignedDisplayIndex, op: 'multiply', 
+                label: '', matrix: [1, 0, 0, 1], originalBackup: null, applied: false, collapsed: false
             });
 
             document.getElementById(`m${internalId}_label`).addEventListener('input', (e) => {
                 const pipeObj = matrixPipeline.find(p => p.id === internalId);
-                if(pipeObj) {
-                    pipeObj.label = e.target.value;
-                    calculateCompositeFromPipeline(); 
-                }
+                if(pipeObj) { pipeObj.label = e.target.value; calculateCompositeFromPipeline(); }
             });
 
-            const inputsToProtect = [
-                `m${internalId}_label`, `m${internalId}_op`, `m${internalId}_00`, 
-                `m${internalId}_01`, `m${internalId}_10`, `m${internalId}_11`, `m${internalId}_toggle_invert`
-            ];
+            const inputsToProtect = [`m${internalId}_label`, `m${internalId}_op`, `m${internalId}_00`, `m${internalId}_01`, `m${internalId}_10`, `m${internalId}_11`, `m${internalId}_toggle_invert`];
             inputsToProtect.forEach(id => {
                 const nodeEl = document.getElementById(id);
                 if(nodeEl) {
@@ -1034,7 +1076,6 @@
                 const pipeObj = matrixPipeline.find(p => p.id === internalId);
                 if (pipeObj) {
                     pipeObj.op = e.target.value;
-                    
                     const invRow = document.getElementById(`m${internalId}_inv_row`);
                     if(pipeObj.op !== 'multiply') {
                         invRow.style.display = 'none';
@@ -1042,14 +1083,8 @@
                             document.getElementById(`m${internalId}_toggle_invert`).checked = false;
                             handleMatrixInversionToggle(internalId, false);
                         }
-                    } else {
-                        invRow.style.display = 'flex';
-                    }
-
-                    if (pipeObj.applied) {
-                        const targetSpace = calculateCompositeFromPipeline();
-                        startTransition(targetSpace);
-                    }
+                    } else { invRow.style.display = 'flex'; }
+                    if (pipeObj.applied) triggerPipelineAndDraw(false);
                 }
             });
 
@@ -1058,32 +1093,27 @@
                 toggleCollapseState(internalId);
             });
 
-            document.getElementById(`btn-apply-m${internalId}`).addEventListener('click', () => {
-                applyTransformation(internalId);
-            });
-
-            document.getElementById(`btn-remove-m${internalId}`).addEventListener('click', () => {
-                removeMatrixBlock(internalId);
-            });
-
-            document.getElementById(`m${internalId}_toggle_invert`).addEventListener('change', (e) => {
-                handleMatrixInversionToggle(internalId, e.target.checked);
-            });
+            document.getElementById(`btn-apply-m${internalId}`).addEventListener('click', () => { applyTransformation(internalId); });
+            document.getElementById(`btn-remove-m${internalId}`).addEventListener('click', () => { removeMatrixBlock(internalId); });
+            document.getElementById(`m${internalId}_toggle_invert`).addEventListener('change', (e) => { handleMatrixInversionToggle(internalId, e.target.checked); });
 
             const gridInputs = [`m${internalId}_00`, `m${internalId}_01`, `m${internalId}_10`, `m${internalId}_11`];
             gridInputs.forEach(inputId => {
-                document.getElementById(inputId).addEventListener('input', () => {
+                const node = document.getElementById(inputId);
+                node.addEventListener('input', () => {
+                    updateVariableSliders();
+                    handleLiveInputValueModification(internalId);
+                });
+                attachNumericTweaker(node, () => {
+                    updateVariableSliders();
                     handleLiveInputValueModification(internalId);
                 });
             });
 
             document.getElementById('btn-add-matrix').disabled = true;
+            if (window.innerWidth > 1024) document.querySelector('.controls').scrollTop = container.scrollHeight;
             
-            const controlsNode = document.querySelector('.controls');
-            if (window.innerWidth > 1024) {
-                controlsNode.scrollTop = container.scrollHeight;
-            }
-            
+            updateVariableSliders();
             calculateCompositeFromPipeline(); 
         }
 
@@ -1091,94 +1121,48 @@
             const pipeObj = matrixPipeline.find(p => p.id === id);
             if (!pipeObj || !pipeObj.applied) return; 
 
-            const invertToggle = document.getElementById(`m${id}_toggle_invert`);
-            if (invertToggle && invertToggle.checked) {
-                invertToggle.checked = false;
+            if (document.getElementById(`m${id}_toggle_invert`).checked) {
+                document.getElementById(`m${id}_toggle_invert`).checked = false;
                 pipeObj.originalBackup = null; 
                 handleMatrixInversionToggle(id, true);
                 return;
             }
-
-            const m_live = [
-                parseFloat(document.getElementById(`m${id}_00`).value) || 0,
-                parseFloat(document.getElementById(`m${id}_10`).value) || 0,
-                parseFloat(document.getElementById(`m${id}_01`).value) || 0,
-                parseFloat(document.getElementById(`m${id}_11`).value) || 0
-            ];
-
-            pipeObj.matrix = m_live;
-            const updatedSpace = calculateCompositeFromPipeline();
-            startTransition(updatedSpace);
+            triggerPipelineAndDraw(false); 
         }
 
         function handleMatrixInversionToggle(id) {
-            const pipeObj = matrixPipeline.find(p => p.id === id);
-            if (!pipeObj) return;
-
+            const pipeObj = matrixPipeline.find(p => p.id === id); if (!pipeObj) return;
             const shouldInvert = document.getElementById(`m${id}_toggle_invert`).checked;
-            const input00 = document.getElementById(`m${id}_00`);
-            const input01 = document.getElementById(`m${id}_01`);
-            const input10 = document.getElementById(`m${id}_10`);
-            const input11 = document.getElementById(`m${id}_11`);
+            const input00 = document.getElementById(`m${id}_00`); const input01 = document.getElementById(`m${id}_01`);
+            const input10 = document.getElementById(`m${id}_10`); const input11 = document.getElementById(`m${id}_11`);
 
             if (shouldInvert) {
-                const a = parseFloat(input00.value) || 0;
-                const b = parseFloat(input01.value) || 0;
-                const c = parseFloat(input10.value) || 0;
-                const d = parseFloat(input11.value) || 0;
+                const a = evaluateExpression(input00.value, input00) || 0; const b = evaluateExpression(input01.value, input01) || 0;
+                const c = evaluateExpression(input10.value, input10) || 0; const d = evaluateExpression(input11.value, input11) || 0;
                 const det = (a * d) - (b * c);
-
                 if (Math.abs(det) < 0.00001) {
-                    alert("Cannot invert this matrix! Space collapses.");
-                    document.getElementById(`m${id}_toggle_invert`).checked = false;
-                    return;
+                    alert("Cannot compute numeric inverse! Matrix determinant is zero.");
+                    document.getElementById(`m${id}_toggle_invert`).checked = false; return;
                 }
-
-                pipeObj.originalBackup = [a, b, c, d];
-                input00.value = parseFloat((d / det).toFixed(3));
-                input01.value = parseFloat((-b / det).toFixed(3));
-                input10.value = parseFloat((-c / det).toFixed(3));
-                input11.value = parseFloat((a / det).toFixed(3));
-            } else {
-                if (pipeObj.originalBackup) {
-                    input00.value = pipeObj.originalBackup[0];
-                    input01.value = pipeObj.originalBackup[1];
-                    input10.value = pipeObj.originalBackup[2];
-                    input11.value = pipeObj.originalBackup[3];
-                }
+                pipeObj.originalBackup = [input00.value, input01.value, input10.value, input11.value];
+                input00.value = formatValue(d / det); input01.value = formatValue(-b / det);
+                input10.value = formatValue(-c / det); input11.value = formatValue(a / det);
+            } else if (pipeObj.originalBackup) {
+                input00.value = pipeObj.originalBackup[0]; input01.value = pipeObj.originalBackup[1];
+                input10.value = pipeObj.originalBackup[2]; input11.value = pipeObj.originalBackup[3];
             }
-
             if (pipeObj.applied) {
-                pipeObj.matrix = [
-                    parseFloat(input00.value) || 0,
-                    parseFloat(input10.value) || 0,
-                    parseFloat(input01.value) || 0,
-                    parseFloat(input11.value) || 0
-                ];
-                const targetSpace = calculateCompositeFromPipeline();
-                startTransition(targetSpace);
-            } else {
-                calculateCompositeFromPipeline();
-            }
+                pipeObj.matrix = getMatrixValuesFromBlock(id); triggerPipelineAndDraw(false);
+            } else calculateCompositeFromPipeline();
         }
 
         function toggleCollapseState(id) {
-            const pipeObj = matrixPipeline.find(p => p.id === id);
-            if(!pipeObj) return;
-
-            const content = document.getElementById(`content-m${id}`);
-            const arrow = document.getElementById(`arrow-m${id}`);
-
+            const pipeObj = matrixPipeline.find(p => p.id === id); if(!pipeObj) return;
+            const content = document.getElementById(`content-m${id}`); const arrow = document.getElementById(`arrow-m${id}`);
             if (pipeObj.collapsed) {
-                content.style.maxHeight = "250px";
-                content.style.opacity = "1";
-                arrow.style.transform = "rotate(0deg)";
-                pipeObj.collapsed = false;
+                content.style.maxHeight = "250px"; content.style.opacity = "1"; arrow.style.transform = "rotate(0deg)"; pipeObj.collapsed = false;
             } else {
-                content.style.maxHeight = "0px";
-                content.style.opacity = "0";
-                arrow.style.transform = "rotate(-90deg)";
-                pipeObj.collapsed = true;
+                content.style.maxHeight = "0px"; content.style.opacity = "0"; arrow.style.transform = "rotate(-90deg)"; pipeObj.collapsed = true;
             }
         }
 
@@ -1186,31 +1170,16 @@
             for(let i = 0; i < matrixPipeline.length; i++){
                 matrixPipeline[i].displayIndex = i + 1;
                 const blockNode = document.getElementById(`group-m${matrixPipeline[i].id}`);
-                if(blockNode) {
-                    blockNode.querySelector('.display-index-label').innerHTML = `M<sub>${i+1}</sub>`;
-                }
+                if(blockNode) blockNode.querySelector('.display-index-label').innerHTML = `M<sub>${i+1}</sub>`;
                 const invertLabelNode = document.querySelector(`#group-m${matrixPipeline[i].id} .invert-control-row span`);
-                if(invertLabelNode) {
-                    invertLabelNode.innerHTML = `Invert Matrix Values (M<sub>${i+1}</sub><sup>-1</sup>)`;
-                }
+                if(invertLabelNode) invertLabelNode.innerHTML = `Invert Matrix Values (M<sub>${i+1}</sub><sup>-1</sup>)`;
             }
         }
 
         function applyTransformation(id) {
-            const pipeObj = matrixPipeline.find(p => p.id === id);
-            if(!pipeObj) return;
-
-            pipeObj.matrix = [
-                parseFloat(document.getElementById(`m${id}_00`).value) || 0,
-                parseFloat(document.getElementById(`m${id}_10`).value) || 0,
-                parseFloat(document.getElementById(`m${id}_01`).value) || 0,
-                parseFloat(document.getElementById(`m${id}_11`).value) || 0
-            ];
-            pipeObj.applied = true;
-
-            const targetSpace = calculateCompositeFromPipeline();
-            startTransition(targetSpace);
-
+            const pipeObj = matrixPipeline.find(p => p.id === id); if(!pipeObj) return;
+            pipeObj.matrix = getMatrixValuesFromBlock(id); pipeObj.applied = true;
+            triggerPipelineAndDraw(false);
             document.getElementById(`btn-apply-m${id}`).disabled = true;
             if(!pipeObj.collapsed) toggleCollapseState(id);
             document.getElementById('btn-add-matrix').disabled = false;
@@ -1219,18 +1188,13 @@
         function removeMatrixBlock(id) {
             const pipelineIndex = matrixPipeline.findIndex(p => p.id === id);
             if(pipelineIndex !== -1) matrixPipeline.splice(pipelineIndex, 1);
+            if(document.getElementById(`group-m${id}`)) document.getElementById(`group-m${id}`).remove();
 
-            const DOMNode = document.getElementById(`group-m${id}`);
-            if(DOMNode) DOMNode.remove();
-
-            reindexPipelineBlocks();
-
-            const recomputedTargetSpace = calculateCompositeFromPipeline();
-            startTransition(recomputedTargetSpace);
-
-            const runningUnappliedBlock = matrixPipeline.find(p => p.applied === false);
-            document.getElementById('btn-add-matrix').disabled = (runningUnappliedBlock !== undefined || matrixPipeline.length === 0);
+            reindexPipelineBlocks(); updateVariableSliders(); 
+            // FIXED: Changed from 'true' to 'false' to allow the system to animate transitions when blocks are removed
+            triggerPipelineAndDraw(false);
             
+            document.getElementById('btn-add-matrix').disabled = (matrixPipeline.find(p => p.applied === false) !== undefined || matrixPipeline.length === 0);
             if(matrixPipeline.length === 0) addNewMatrixBlock();
         }
 
@@ -1239,52 +1203,30 @@
             const zoomIntensity = 0.1;
             if (event.deltaY < 0) globalZoomScale += globalZoomScale * zoomIntensity;
             else globalZoomScale -= globalZoomScale * zoomIntensity;
-
-            if(globalZoomScale < 0.05) globalZoomScale = 0.05;
-            if(globalZoomScale > 15.0) globalZoomScale = 15.0;
-
+            globalZoomScale = Math.max(0.05, Math.min(15.0, globalZoomScale));
             document.getElementById('zoom_readout').innerText = globalZoomScale.toFixed(2) + 'x';
             draw();
         }, { passive: false });
 
-        const controlModeSelector = document.getElementById('cfg_control_mode');
-        const speedRow = document.getElementById('row-engine-speed');
-        const scrubRow = document.getElementById('row-engine-scrub');
-        const scrubSlider = document.getElementById('cfg_scrub_slider');
-        const scrubReadout = document.getElementById('scrub_readout');
-
-        controlModeSelector.addEventListener('change', () => {
-            if(controlModeSelector.value === 'time') {
-                speedRow.style.display = 'flex';
-                scrubRow.style.display = 'none';
-            } else {
-                speedRow.style.display = 'none';
-                scrubRow.style.display = 'flex';
-                scrubSlider.value = animationProgress;
-                scrubReadout.innerText = parseFloat(scrubSlider.value).toFixed(2);
-            }
+        document.getElementById('cfg_control_mode').addEventListener('change', (e) => {
+            document.getElementById('row-engine-speed').style.display = e.target.value === 'time' ? 'flex' : 'none';
+            document.getElementById('row-engine-scrub').style.display = e.target.value === 'manual' ? 'flex' : 'none';
         });
 
-        scrubSlider.addEventListener('input', () => {
-            if(controlModeSelector.value !== 'manual') return;
-            animationProgress = parseFloat(scrubSlider.value);
-            scrubReadout.innerText = animationProgress.toFixed(2);
-            updateMatrixInterpolation(animationProgress);
-            draw();
+        document.getElementById('cfg_scrub_slider').addEventListener('input', (e) => {
+            if(document.getElementById('cfg_control_mode').value !== 'manual') return;
+            animationProgress = parseFloat(e.target.value);
+            document.getElementById('scrub_readout').innerText = animationProgress.toFixed(2);
+            updateMatrixInterpolation(animationProgress); draw();
         });
 
-        const speedSlider = document.getElementById('cfg_speed_slider');
-        const speedReadout = document.getElementById('speed_readout');
-        const instantCheckbox = document.getElementById('cfg_instant');
-
-        speedSlider.addEventListener('input', () => {
-            speedReadout.innerText = parseFloat(speedSlider.value).toFixed(2) + 'x';
-            if(instantCheckbox.checked) instantCheckbox.checked = false; 
+        document.getElementById('cfg_speed_slider').addEventListener('input', (e) => {
+            document.getElementById('speed_readout').innerText = parseFloat(e.target.value).toFixed(2) + 'x';
+            document.getElementById('cfg_instant').checked = false;
         });
 
-        instantCheckbox.addEventListener('change', () => {
-            if(instantCheckbox.checked) speedReadout.innerText = 'Instant';
-            else speedReadout.innerText = parseFloat(speedSlider.value).toFixed(2) + 'x';
+        document.getElementById('cfg_instant').addEventListener('change', (e) => {
+            document.getElementById('speed_readout').innerText = e.target.checked ? 'Instant' : parseFloat(document.getElementById('cfg_speed_slider').value).toFixed(2) + 'x';
         });
 
         document.getElementById('cfg_show_ghost').addEventListener('change', (e) => {
@@ -1297,39 +1239,44 @@
         document.getElementById('cfg_opacity_active').addEventListener('input', draw);
         document.getElementById('cfg_ghost_color').addEventListener('input', draw);
         document.getElementById('cfg_opacity_ghost').addEventListener('input', draw);
-        document.getElementById('v_custom_x').addEventListener('input', draw);
-        document.getElementById('v_custom_y').addEventListener('input', draw);
-        document.getElementById('btn-add-matrix').addEventListener('click', () => { addNewMatrixBlock(); });
+        
+        // Custom Vector fields with updated explicit mouse-wheel and scroll listeners
+        ['v_custom_x', 'v_custom_y'].forEach(id => {
+            const node = document.getElementById(id);
+            node.addEventListener('input', () => { updateVariableSliders(); triggerPipelineAndDraw(true); });
+            attachNumericTweaker(node, () => { updateVariableSliders(); triggerPipelineAndDraw(true); });
+        });
+        
+        const scratchInputs = ['sc_00', 'sc_01', 'sc_10', 'sc_11'];
+        scratchInputs.forEach(id => {
+            const node = document.getElementById(id);
+            node.addEventListener('input', () => { updateVariableSliders(); runScratchpadCalculations(); });
+            attachNumericTweaker(node, () => { updateVariableSliders(); runScratchpadCalculations(); });
+        });
 
+        document.getElementById('btn-add-matrix').addEventListener('click', () => { addNewMatrixBlock(); });
         document.getElementById('btn-reset').addEventListener('click', () => {
-            matrixPipeline = [];
+            matrixPipeline = []; globalVariables = {}; activeVarsSerialized = "";
             document.getElementById('matrix-container').innerHTML = '';
+            document.getElementById('variable-sliders-container').innerHTML = `<div style="color: #666; font-size: 12px; font-style: italic;">Type a variable (like 'a' or 'b') inside any matrix node to generate a slider control...</div>`;
             currentMatrix = [1, 0, 0, 1]; startMatrix = [1, 0, 0, 1]; targetMatrix = [1, 0, 0, 1];
             globalZoomScale = 1.0; animationProgress = 1.0;
             document.getElementById('zoom_readout').innerText = '1.00x';
-            scrubSlider.value = 1.00; scrubReadout.innerText = "1.00";
-            draw();
-            addNewMatrixBlock();
+            document.getElementById('cfg_scrub_slider').value = 1.00; document.getElementById('scrub_readout').innerText = "1.00";
+            document.getElementById('sc_00').value = "2"; document.getElementById('sc_01').value = "1";
+            document.getElementById('sc_10').value = "1"; document.getElementById('sc_11').value = "2";
+            addNewMatrixBlock(); runScratchpadCalculations(); draw();
         });
 
-        const precisionBtn = document.getElementById('toggle-precision');
-        precisionBtn.addEventListener('click', () => {
+        document.getElementById('toggle-precision').addEventListener('click', (e) => {
             highPrecisionMode = !highPrecisionMode;
-            if (highPrecisionMode) {
-                precisionBtn.innerText = "Float Mode: On";
-                precisionBtn.classList.add('active');
-            } else {
-                precisionBtn.innerText = "Float Mode: Off";
-                precisionBtn.classList.remove('active');
-            }
+            e.target.innerText = highPrecisionMode ? "Float Mode: On" : "Float Mode: Off";
+            e.target.classList.toggle('active', highPrecisionMode);
             runScratchpadCalculations();
         });
 
         document.getElementById('btn-scratch-calc').addEventListener('click', runScratchpadCalculations);
-        initDragAndDropSupport();
-        addNewMatrixBlock();
-        runScratchpadCalculations();
-        draw();
+        initDragAndDropSupport(); addNewMatrixBlock(); runScratchpadCalculations(); draw();
     </script>
 </body>
 </html>
