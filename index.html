@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Matrix Arithmetic Playground</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #111;
+            color: #eee;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* Restricts the window viewport to screen size to eliminate main page scrolling */
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        h1 { margin-bottom: 5px; color: #61afef; flex-shrink: 0; }
+        p.subtitle { margin-top: 0; color: #abb2bf; font-size: 14px; margin-bottom: 20px; flex-shrink: 0; }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1450px;
+            width: 100%;
+            /* Dynamically stretches content space to use remaining vertical area */
+            flex: 1;
+            min-height: 0; 
+            margin-bottom: 10px;
+        }
+        .canvas-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 0;
+            position: relative;
+        }
+        canvas {
+            background-color: #1a1a1a;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            cursor: ns-resize;
+            width: 600px;
+            height: 600px;
+            aspect-ratio: 1 / 1;
+        }
+        .output-info-bar {
+            background-color: #16191f;
+            border: 1px solid #282c34;
+            border-radius: 6px;
+            padding: 10px 14px;
+            width: 572px; 
+            font-family: monospace;
+            font-size: 12px;
+            color: #abb2bf;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .output-info-bar span.label {
+            color: #e5c07b;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        .output-info-bar .formula-string {
+            color: #61afef;
+            font-size: 13px;
+            word-wrap: break-word;
+        }
+        .controls {
+            flex: 1;
+            background-color: #222;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            /* Fills container safely and limits scroll layout internally */
+            height: 100%;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .sidebar {
+            width: 340px;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            /* Confines panel content context without triggering body overflows */
+            height: 100%;
+            box-sizing: border-box;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .matrix-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .matrix-input-group {
+            border: 1px solid #444;
+            padding: 15px;
+            border-radius: 6px;
+            background: #282c34;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .matrix-input-group.dragging {
+            opacity: 0.4;
+            border: 2px dashed #61afef;
+            background: #1e222b;
+        }
+        
+        .matrix-header {
+            display: grid;
+            grid-template-columns: 1fr auto; 
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            gap: 12px;
+            width: 100%;
+        }
+        
+        .matrix-title-zone {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            min-width: 0; 
+        }
+        .drag-handle {
+            color: #666;
+            cursor: grab;
+            padding: 0 2px 0 0;
+            font-size: 18px;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .custom-label-input {
+            background: #1e1e1e;
+            border: 1px solid #444;
+            color: #98c379;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            width: 85px;
+            font-weight: bold;
+            flex-shrink: 1; 
+            min-width: 50px;
+        }
+        .custom-label-input:focus {
+            border-color: #61afef;
+            outline: none;
+        }
+        .collapse-indicator {
+            font-size: 11px;
+            color: #61afef;
+            transition: transform 0.2s;
+            user-select: none;
+            width: 12px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .matrix-content-wrapper {
+            transition: max-height 0.25s ease-out, opacity 0.2s;
+            overflow: hidden;
+        }
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 70px);
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .config-group {
+            border: 1px solid #3e4451;
+            padding: 12px;
+            border-radius: 6px;
+            background: #1e222b;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .config-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #abb2bf;
+        }
+        .nested-row {
+            background: rgba(0,0,0,0.2);
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-top: -2px;
+            border: 1px solid #282c34;
+        }
+        input[type="number"] {
+            width: 60px;
+            padding: 8px;
+            background: #1e1e1e;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+        }
+        input[type="color"] {
+            border: none;
+            background: none;
+            width: 35px;
+            height: 25px;
+            cursor: pointer;
+        }
+        input[type="range"] {
+            flex: 1;
+            margin: 0 8px;
+            accent-color: #98c379;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            color: #111;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-apply { background-color: #98c379; }
+        .btn-apply:hover { background-color: #a3e08a; }
+        .btn-add { background-color: #61afef; color: #fff; }
+        .btn-add:hover { background-color: #6fbbf7; }
+        .btn-reset { background-color: #e06c75; color: white; }
+        .btn-reset:hover { background-color: #ed7881; }
+        
+        .btn-remove {
+            background-color: rgba(224, 108, 117, 0.15);
+            color: #e06c75;
+            padding: 5px 10px;
+            font-size: 11px;
+            width: auto;
+            border: 1px solid #e06c75;
+            flex-shrink: 0;
+            justify-self: end; 
+        }
+        .btn-remove:hover {
+            background-color: #e06c75;
+            color: #111;
+        }
+        .btn-calc { background-color: #e5c07b; color: #111; margin-top: 10px; }
+        .btn-calc:hover { background-color: #f1ce93; }
+        button:disabled { background-color: #444; color: #777; cursor: not-allowed; border: none; }
+        
+        .status-box {
+            background: #3e4451;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .calc-section {
+            background: #252b35;
+            border-left: 4px solid #e5c07b;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .calc-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .calc-title {
+            font-weight: bold;
+            color: #e5c07b;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+        .precision-badge-btn {
+            background: #1e222b;
+            color: #abb2bf;
+            border: 1px solid #3e4451;
+            font-size: 9px;
+            padding: 2px 6px;
+            width: auto;
+            border-radius: 3px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: normal;
+        }
+        .precision-badge-btn:hover {
+            background: #3e4451;
+            color: #fff;
+        }
+        .precision-badge-btn.active {
+            background: #e5c07b;
+            color: #111;
+            border-color: #e5c07b;
+            font-weight: bold;
+        }
+        .vector-legend {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-weight: bold;}
+        .i-hat { color: #e06c75; }
+        .j-hat { color: #61afef; }
+        .custom-v { color: #c678dd; }
+        hr { border: 0; border-top: 1px solid #444; margin: 10px 0; }
+        
+        select {
+            background: #1e1e1e;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 6px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        .op-select {
+            background: #16191f;
+            color: #e5c07b;
+            border: 1px solid #444;
+            padding: 4px 6px;
+            font-weight: bold;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 1;
+            min-width: 90px;
+        }
+        
+        .invert-control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding: 6px 8px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 4px;
+            font-size: 12px;
+            color: #e5c07b;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider-switch {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #555;
+            transition: .3s;
+            border-radius: 20px;
+        }
+        .slider-switch:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider-switch { background-color: #e5c07b; }
+        input:checked + .slider-switch:before { transform: translateX(14px); }
+    </style>
+</head>
+<body>
+
+    <h1>Linear & Affine Transformation Playground</h1>
+    <p class="subtitle">Interactive drag-and-drop structural node pipeline with user track labels</p>
+    
+    <div class="container">
+        <div class="canvas-area">
+            <canvas id="canvas" width="600" height="600"></canvas>
+            
+            <div class="output-info-bar">
+                <div><span class="label">Current Stack Evaluation String:</span></div>
+                <div class="formula-string" id="live-pipeline-formula">Identity (I)</div>
+                <div style="color: #98c379; margin-top: 2px;" id="live-matrix-numerical-readout">Matrix: [1.00, 0.00, 0.00, 1.00]</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div id="matrix-container" class="matrix-list"></div>
+            <button id="btn-add-matrix" class="btn-add" disabled>+ Add Next Matrix Transformation Block</button>
+            <button id="btn-reset" class="btn-reset">Reset Entire Space</button>
+            
+            <div class="status-box">
+                <div class="vector-legend">
+                    <span class="legend-item i-hat">i-hat (1,0)</span>
+                    <span class="legend-item j-hat">j-hat (0,1)</span>
+                    <span class="legend-item custom-v">Custom Vector</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <h3 style="margin: 0; color: #98c379; border-bottom: 1px solid #333; padding-bottom: 6px;">Environment Controls</h3>
+            
+            <div class="config-group">
+                <div class="config-row">
+                    <span>Plot Custom Vector [x, y]:</span>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="number" id="v_custom_x" value="1" step="0.5" style="width: 45px; padding: 4px; font-size: 14px;">
+                        <input type="number" id="v_custom_y" value="2" step="0.5" style="width: 45px; padding: 4px; font-size: 14px;">
+                    </div>
+                </div>
+
+                <div class="config-row">
+                    <span>Active Canvas Zoom:</span>
+                    <span id="zoom_readout" style="color:#61afef; font-family:monospace; font-weight:bold; background: #111; padding: 4px 8px; border-radius: 4px; border: 1px solid #444;">1.00x</span>
+                </div>
+
+                <hr style="margin:5px 0;">
+
+                <div class="config-row">
+                    <span style="color:#e06c75; font-weight:bold;">Active Grid Color:</span>
+                    <input type="color" id="cfg_grid_color" value="#ffffff">
+                </div>
+                <div class="config-row nested-row">
+                    <span>Active Grid Density:</span>
+                    <input type="range" id="cfg_opacity_active" min="0.0" max="1.0" step="0.05" value="1.0">
+                </div>
+
+                <div class="config-row">
+                    <span>Show Ghost Grid (Identity):</span>
+                    <label class="switch">
+                        <input type="checkbox" id="cfg_show_ghost" checked>
+                        <span class="slider-switch"></span>
+                    </label>
+                </div>
+                <div class="config-row nested-row" id="row-ghost-color-pick">
+                    <span>Ghost Grid Color:</span>
+                    <input type="color" id="cfg_ghost_color" value="#888888">
+                </div>
+                <div class="config-row nested-row" id="row-ghost-opacity">
+                    <span>Ghost Grid Density:</span>
+                    <input type="range" id="cfg_opacity_ghost" min="0.0" max="1.0" step="0.05" value="0.30">
+                </div>
+
+                <hr style="margin:5px 0;">
+
+                <div class="config-row">
+                    <span>Engine Mode:</span>
+                    <select id="cfg_control_mode">
+                        <option value="time">Automated (Time-Based)</option>
+                        <option value="manual">Manual (Scrubbing Timeline)</option>
+                    </select>
+                </div>
+
+                <div class="config-row nested-row" id="row-engine-speed">
+                    <span>Speed: <span id="speed_readout" style="color:#98c379; font-family:monospace; font-weight:bold;">1.00x</span></span>
+                    <div style="display: flex; align-items: center; flex: 1; justify-content: flex-end; gap: 6px;">
+                        <input type="range" id="cfg_speed_slider" min="0.01" max="5.0" step="0.01" value="1.0">
+                        <label style="display: flex; align-items: center; gap: 4px; font-size: 11px; cursor: pointer; white-space: nowrap;">
+                            <input type="checkbox" id="cfg_instant"> Instant
+                        </label>
+                    </div>
+                </div>
+
+                <div class="config-row nested-row" id="row-engine-scrub" style="display: none;">
+                    <span>Timeline (t): <span id="scrub_readout" style="color:#e5c07b; font-family:monospace; font-weight:bold;">1.00</span></span>
+                    <input type="range" id="cfg_scrub_slider" min="0.00" max="1.00" step="0.01" value="1.00">
+                </div>
+            </div>
+
+            <h3 style="margin: 10px 0 0 0; color: #e5c07b; border-bottom: 1px solid #333; padding-bottom: 6px;">Matrix Scratchpad</h3>
+            <div style="background: #282c34; padding: 12px; border-radius: 6px; border: 1px solid #444;">
+                <div class="matrix-grid" style="margin-top: 0;">
+                    <input type="number" id="sc_00" value="2" step="0.5">
+                    <input type="number" id="sc_01" value="1" step="0.5">
+                    <input type="number" id="sc_10" value="1" step="0.5">
+                    <input type="number" id="sc_11" value="2" step="0.5">
+                </div>
+                <button id="btn-scratch-calc" class="btn-calc">Compute Matrix Properties</button>
+            </div>
+
+            <div class="calc-section">
+                <div class="calc-title-row">
+                    <div class="calc-title">Determinant</div>
+                    <button class="precision-badge-btn" id="toggle-precision">Float Mode: Off</button>
+                </div>
+                <div id="calc-det">det(M) = --</div>
+            </div>
+            <div class="calc-section"><div class="calc-title-row"><div class="calc-title">Inverse Matrix</div></div><div id="calc-inv" style="white-space: pre;">--</div></div>
+            <div class="calc-section"><div class="calc-title-row"><div class="calc-title">Eigenvalues</div></div><div id="calc-eigenvals" style="white-space: pre;">--</div></div>
+            <div class="calc-section"><div class="calc-title-row"><div class="calc-title">Eigenvectors</div></div><div id="calc-eigenvecs" style="white-space: pre;">--</div></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        const baseGridSpacing = 40; 
+
+        let startMatrix = [1, 0, 0, 1]; 
+        let targetMatrix = [1, 0, 0, 1]; 
+        let currentMatrix = [1, 0, 0, 1]; 
+        
+        let matrixPipeline = []; 
+        let uniqueIdCounter = 0;
+
+        let animating = false;
+        let animationProgress = 1.0; 
+
+        let globalZoomScale = 1.0;
+        let highPrecisionMode = false;
+
+        function multiplyMatrices(A, B) {
+            return [
+                A[0]*B[0] + A[2]*B[1], 
+                A[1]*B[0] + A[3]*B[1], 
+                A[0]*B[2] + A[2]*B[3], 
+                A[1]*B[2] + A[3]*B[3]  
+            ];
+        }
+
+        function addMatrices(A, B) {
+            return [A[0]+B[0], A[1]+B[1], A[2]+B[2], A[3]+B[3]];
+        }
+
+        function subtractMatrices(A, B) {
+            return [A[0]-B[0], A[1]-B[1], A[2]-B[2], A[3]-B[3]];
+        }
+
+        function calculateCompositeFromPipeline() {
+            let result = [1, 0, 0, 1];
+            let logicChainString = "I";
+            
+            for (let i = 0; i < matrixPipeline.length; i++) {
+                let item = matrixPipeline[i];
+                if (item.applied) {
+                    let blockIdentifier = item.label.trim() !== "" ? `[${item.label.trim()}]` : `M${item.displayIndex}`;
+                    
+                    // Fixed: Look up the DOM switch element to check if inverse state is active for this block
+                    const invToggleElement = document.getElementById(`m${item.id}_toggle_invert`);
+                    if (invToggleElement && invToggleElement.checked) {
+                        blockIdentifier = `${blockIdentifier}⁻¹`;
+                    }
+                    
+                    if (item.op === 'multiply') {
+                        result = multiplyMatrices(item.matrix, result);
+                        logicChainString = `${blockIdentifier} × (${logicChainString})`;
+                    } else if (item.op === 'add') {
+                        result = addMatrices(result, item.matrix);
+                        logicChainString = `(${logicChainString}) + ${blockIdentifier}`;
+                    } else if (item.op === 'subtract') {
+                        result = subtractMatrices(result, item.matrix);
+                        logicChainString = `(${logicChainString}) - ${blockIdentifier}`;
+                    }
+                }
+            }
+
+            const formulaTextNode = document.getElementById('live-pipeline-formula');
+            const numericTextNode = document.getElementById('live-matrix-numerical-readout');
+            
+            formulaTextNode.innerText = matrixPipeline.some(p => p.applied) ? logicChainString : "Identity (I)";
+            numericTextNode.innerText = `Matrix: [${result[0].toFixed(2)}, ${result[1].toFixed(2)}, ${result[2].toFixed(2)}, ${result[3].toFixed(2)}]`;
+
+            return result;
+        }
+
+        function getHexToRgbA(hex, alpha) {
+            let c;
+            if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+                c= hex.substring(1).split('');
+                if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; }
+                c= '0x'+c.join('');
+                return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+alpha+')';
+            }
+            return 'rgba(255,255,255,'+alpha+')';
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.save();
+            ctx.translate(width / 2, height / 2);
+            ctx.scale(1, -1); 
+
+            const activeSpacing = baseGridSpacing * globalZoomScale;
+            const range = Math.ceil(20 / Math.max(globalZoomScale, 0.05));
+
+            const showGhost = document.getElementById('cfg_show_ghost').checked;
+            if(showGhost) {
+                const ghostGridColor = document.getElementById('cfg_ghost_color').value;
+                const ghostOpacityBase = parseFloat(document.getElementById('cfg_opacity_ghost').value);
+                ctx.lineWidth = 1;
+                for (let i = -range; i <= range; i++) {
+                    ctx.strokeStyle = i === 0 ? getHexToRgbA(ghostGridColor, ghostOpacityBase * 0.8) : getHexToRgbA(ghostGridColor, ghostOpacityBase * 0.3);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(i * activeSpacing, -range * activeSpacing);
+                    ctx.lineTo(i * activeSpacing, range * activeSpacing);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(-range * activeSpacing, i * activeSpacing);
+                    ctx.lineTo(range * activeSpacing, i * activeSpacing);
+                    ctx.stroke();
+                }
+            }
+
+            const activeGridColor = document.getElementById('cfg_grid_color').value;
+            const activeOpacityBase = parseFloat(document.getElementById('cfg_opacity_active').value);
+            
+            const ix = currentMatrix[0] * activeSpacing;
+            const iy = currentMatrix[1] * activeSpacing;
+            const jx = currentMatrix[2] * activeSpacing;
+            const jy = currentMatrix[3] * activeSpacing;
+
+            ctx.lineWidth = 1;
+            for (let i = -range; i <= range; i++) {
+                ctx.strokeStyle = i === 0 ? getHexToRgbA(activeGridColor, activeOpacityBase * 0.7) : getHexToRgbA(activeGridColor, activeOpacityBase * 0.2);
+                ctx.beginPath();
+                ctx.moveTo(i * ix - range * jx, i * iy - range * jy);
+                ctx.lineTo(i * ix + range * jx, i * iy + range * jy);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(i * jx - range * ix, i * jy - range * iy);
+                ctx.lineTo(i * jx + range * ix, i * jy + range * iy);
+                ctx.stroke();
+            }
+
+            ctx.save();
+            ctx.globalAlpha = Math.max(activeOpacityBase, 0.2);
+            drawVector(0, 0, ix, iy, '#e06c75');
+            drawVector(0, 0, jx, jy, '#61afef');
+
+            const vx = parseFloat(document.getElementById('v_custom_x').value) || 0;
+            const vy = parseFloat(document.getElementById('v_custom_y').value) || 0;
+
+            const transformed_vx = (currentMatrix[0] * vx + currentMatrix[2] * vy) * activeSpacing;
+            const transformed_vy = (currentMatrix[1] * vx + currentMatrix[3] * vy) * activeSpacing;
+
+            drawVector(0, 0, transformed_vx, transformed_vy, '#c678dd');
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        function drawVector(fromX, fromY, toX, toY, color) {
+            if (Math.abs(toX - fromX) < 0.01 && Math.abs(toY - fromY) < 0.01) return;
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - 12 * Math.cos(angle - Math.PI / 6), toY - 12 * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - 12 * Math.cos(angle + Math.PI / 6), toY - 12 * Math.sin(angle + Math.PI / 6));
+            ctx.fill();
+        }
+
+        function updateMatrixInterpolation(prog) {
+            const t = 1 - Math.pow(1 - prog, 3); 
+            for (let i = 0; i < 4; i++) {
+                currentMatrix[i] = startMatrix[i] + t * (targetMatrix[i] - startMatrix[i]);
+            }
+        }
+
+        function animate() {
+            if (!animating) return;
+            
+            const mode = document.getElementById('cfg_control_mode').value;
+            if (mode === 'manual') {
+                animating = false;
+                return;
+            }
+
+            const isInstant = document.getElementById('cfg_instant').checked;
+            if (isInstant) {
+                animationProgress = 1;
+            } else {
+                const speedMultiplier = parseFloat(document.getElementById('cfg_speed_slider').value) || 1.0;
+                animationProgress += (0.025 * speedMultiplier);
+            }
+            
+            if (animationProgress >= 1) {
+                animationProgress = 1;
+                animating = false;
+                currentMatrix = [...targetMatrix];
+                document.getElementById('cfg_scrub_slider').value = 1.00;
+                document.getElementById('scrub_readout').innerText = "1.00";
+            } else {
+                updateMatrixInterpolation(animationProgress);
+                document.getElementById('cfg_scrub_slider').value = animationProgress.toFixed(2);
+                document.getElementById('scrub_readout').innerText = animationProgress.toFixed(2);
+            }
+            
+            draw();
+            if (animating) requestAnimationFrame(animate);
+        }
+
+        function startTransition(toMatrix) {
+            const mode = document.getElementById('cfg_control_mode').value;
+            
+            if(mode === 'time') {
+                startMatrix = [...currentMatrix];
+                targetMatrix = toMatrix;
+                animationProgress = 0;
+                animating = true;
+                animate();
+            } else {
+                startMatrix = [...currentMatrix];
+                targetMatrix = toMatrix;
+                document.getElementById('cfg_scrub_slider').value = 0.00;
+                document.getElementById('scrub_readout').innerText = "0.00";
+                animationProgress = 0.0;
+                updateMatrixInterpolation(0.0);
+                draw();
+            }
+        }
+
+        function formatValue(val) {
+            if (highPrecisionMode) {
+                if (Math.abs(val % 1) < 0.000001) return val.toFixed(0); 
+                let s = val.toFixed(7);
+                while (s.endsWith('0') && s.includes('.')) s = s.slice(0, -1);
+                if (s.endsWith('.')) s = s.slice(0, -1);
+                return s;
+            }
+            return val.toFixed(2);
+        }
+
+        function runScratchpadCalculations() {
+            const a = parseFloat(document.getElementById('sc_00').value) || 0;
+            const b = parseFloat(document.getElementById('sc_01').value) || 0;
+            const c = parseFloat(document.getElementById('sc_10').value) || 0;
+            const d = parseFloat(document.getElementById('sc_11').value) || 0;
+
+            const det = (a * d) - (b * c);
+            document.getElementById('calc-det').innerText = `det(M) = ${formatValue(det)}`;
+
+            if (Math.abs(det) < 0.00001) {
+                document.getElementById('calc-inv').innerText = "Matrix Singular\n(No Inverse exists!)";
+            } else {
+                const inv_a = d / det;
+                const inv_b = -b / det;
+                const inv_c = -c / det;
+                const inv_d = a / det;
+                document.getElementById('calc-inv').innerHTML = `[${formatValue(inv_a)}, ${formatValue(inv_b)}]<br>[${formatValue(inv_c)}, ${formatValue(inv_d)}]`;
+            }
+
+            const trace = a + d;
+            const discriminant = (trace * trace) - (4 * det);
+
+            let l1 = 0, l2 = 0;
+            let valStr = "";
+            let vecStr = "";
+
+            if (discriminant > 0.00001) {
+                l1 = (trace + Math.sqrt(discriminant)) / 2;
+                l2 = (trace - Math.sqrt(discriminant)) / 2;
+                valStr += `λ₁ = ${formatValue(l1)}\n`;
+                valStr += `λ₂ = ${formatValue(l2)}`;
+            } else if (Math.abs(discriminant) <= 0.00001) {
+                l1 = trace / 2;
+                l2 = l1;
+                valStr += `λ₁ = λ₂ = ${formatValue(l1)}`;
+            } else {
+                const realPart = trace / 2;
+                const imagPart = Math.sqrt(-discriminant) / 2;
+                valStr += `λ₁ = ${formatValue(realPart)} + ${formatValue(imagPart)}i\n`;
+                valStr += `λ₂ = ${formatValue(realPart)} - ${formatValue(imagPart)}i`;
+                document.getElementById('calc-eigenvals').innerText = valStr;
+                document.getElementById('calc-eigenvecs').innerText = "v₁ = Complex Direction\nv₂ = Complex Direction";
+                return;
+            }
+            document.getElementById('calc-eigenvals').innerText = valStr;
+
+            function calculateIntegerVector(lambda) {
+                let x = 0, y = 0;
+                if (Math.abs(c) > 0.00001) { x = lambda - d; y = c; } 
+                else if (Math.abs(b) > 0.00001) { x = b; y = lambda - a; } 
+                else {
+                    if (Math.abs(lambda - a) < 0.00001) return [1.00, 0.00];
+                    else return [0.00, 1.00];
+                }
+                const absX = Math.abs(x), absY = Math.abs(y);
+                const scaleFactor = (absX > 0.00001 && (absX <= absY || absY < 0.00001)) ? absX : absY;
+                if (scaleFactor > 0.00001) { x /= scaleFactor; y /= scaleFactor; }
+                if (Math.abs(x) < 0.00001) x = 0;
+                if (Math.abs(y) < 0.00001) y = 0;
+                return [x, y];
+            }
+
+            if (Math.abs(discriminant) <= 0.00001) {
+                if (Math.abs(b) < 0.00001 && Math.abs(c) < 0.00001) {
+                    vecStr = `v₁ = [1.00, 0.00]\nv₂ = [0.00, 1.00]\n(All invariant)`;
+                } else {
+                    const v1 = calculateIntegerVector(l1);
+                    vecStr = `v₁ = [${formatValue(v1[0])}, ${formatValue(v1[1])}]\nv₂ = None (Shear Degeneracy)`;
+                }
+            } else {
+                const v1 = calculateIntegerVector(l1);
+                const v2 = calculateIntegerVector(l2);
+                vecStr += `v₁ = [${formatValue(v1[0])}, ${formatValue(v1[1])}]\n`;
+                vecStr += `v₂ = [${formatValue(v2[0])}, ${formatValue(v2[1])}]`;
+            }
+            document.getElementById('calc-eigenvecs').innerText = vecStr;
+        }
+
+        function initDragAndDropSupport() {
+            const container = document.getElementById('matrix-container');
+            
+            container.addEventListener('dragstart', (e) => {
+                const targetBlock = e.target.closest('.matrix-input-group');
+                if(!targetBlock) return;
+                targetBlock.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', targetBlock.id);
+            });
+
+            container.addEventListener('dragend', (e) => {
+                const targetBlock = e.target.closest('.matrix-input-group');
+                if(targetBlock) targetBlock.classList.remove('dragging');
+                rebuildPipelineSequenceFromDOM();
+            });
+
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const draggingElement = container.querySelector('.dragging');
+                if(!draggingElement) return;
+
+                const afterElement = getDragAfterElement(container, e.clientY);
+                if (afterElement == null) {
+                    container.appendChild(draggingElement);
+                } else {
+                    container.insertBefore(draggingElement, afterElement);
+                }
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.matrix-input-group:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function rebuildPipelineSequenceFromDOM() {
+            const container = document.getElementById('matrix-container');
+            const DOMBlocks = [...container.querySelectorAll('.matrix-input-group')];
+            
+            let newReorderedPipeline = [];
+            
+            DOMBlocks.forEach((blockNode) => {
+                const parsedId = parseInt(blockNode.id.replace('group-m', ''));
+                const originalObjectReference = matrixPipeline.find(p => p.id === parsedId);
+                if(originalObjectReference) {
+                    newReorderedPipeline.push(originalObjectReference);
+                }
+            });
+            
+            matrixPipeline = newReorderedPipeline;
+            reindexPipelineBlocks();
+            
+            const targetSpace = calculateCompositeFromPipeline();
+            startTransition(targetSpace);
+        }
+
+        function addNewMatrixBlock() {
+            uniqueIdCounter++;
+            const internalId = uniqueIdCounter;
+            const assignedDisplayIndex = matrixPipeline.length + 1;
+
+            const container = document.getElementById('matrix-container');
+            const group = document.createElement('div');
+            group.className = 'matrix-input-group';
+            group.id = `group-m${internalId}`;
+            group.draggable = true;
+            
+            let d00=1, d01=0, d10=0, d11=1;
+            if (assignedDisplayIndex === 1) { d10 = 1; } 
+            if (assignedDisplayIndex === 2) { d00 = 0; d01 = -1; d10 = 1; d11 = 0; } 
+            
+            group.innerHTML = `
+                <div class="matrix-header" id="header-m${internalId}">
+                    <div class="matrix-title-zone">
+                        <span class="drag-handle" title="Drag to reorder workspace">⋮⋮</span>
+                        <span class="collapse-indicator" id="arrow-m${internalId}">▼</span>
+                        <span class="display-index-label" style="white-space:nowrap; margin-right:2px;">M<sub>${assignedDisplayIndex}</sub></span>
+                        <input type="text" id="m${internalId}_label" class="custom-label-input" placeholder="Label..." maxlength="16">
+                        <select class="op-select" id="m${internalId}_op">
+                            <option value="multiply">Multiply (×)</option>
+                            <option value="add">Add (+)</option>
+                            <option value="subtract">Subtract (-)</option>
+                        </select>
+                    </div>
+                    <button class="btn-remove" id="btn-remove-m${internalId}">Remove</button>
+                </div>
+                <div class="matrix-content-wrapper" id="content-m${internalId}" style="max-height: 250px;">
+                    <div class="matrix-grid">
+                        <input type="number" id="m${internalId}_00" value="${d00}" step="0.5">
+                        <input type="number" id="m${internalId}_01" value="${d01}" step="0.5">
+                        <input type="number" id="m${internalId}_10" value="${d10}" step="0.5">
+                        <input type="number" id="m${internalId}_11" value="${d11}" step="0.5">
+                    </div>
+                    
+                    <div class="invert-control-row" id="m${internalId}_inv_row">
+                        <span style="font-weight: 500;">Invert Matrix Values (M<sub>${assignedDisplayIndex}</sub><sup>-1</sup>)</span>
+                        <label class="switch">
+                            <input type="checkbox" id="m${internalId}_toggle_invert">
+                            <span class="slider-switch"></span>
+                        </label>
+                    </div>
+
+                    <button id="btn-apply-m${internalId}" class="btn-apply" style="margin-top:15px;">Push Operation to Stack</button>
+                </div>
+            `;
+            
+            container.appendChild(group);
+
+            matrixPipeline.push({
+                id: internalId,
+                displayIndex: assignedDisplayIndex,
+                op: 'multiply', 
+                label: '',
+                matrix: [1, 0, 0, 1],
+                originalBackup: null, 
+                applied: false,
+                collapsed: false
+            });
+
+            document.getElementById(`m${internalId}_label`).addEventListener('input', (e) => {
+                const pipeObj = matrixPipeline.find(p => p.id === internalId);
+                if(pipeObj) {
+                    pipeObj.label = e.target.value;
+                    calculateCompositeFromPipeline();
+                }
+            });
+
+            const inputsToProtect = [
+                `m${internalId}_label`, `m${internalId}_op`, `m${internalId}_00`, 
+                `m${internalId}_01`, `m${internalId}_10`, `m${internalId}_11`, `m${internalId}_toggle_invert`
+            ];
+            inputsToProtect.forEach(id => {
+                const nodeEl = document.getElementById(id);
+                if(nodeEl) {
+                    nodeEl.addEventListener('mouseenter', () => group.draggable = false);
+                    nodeEl.addEventListener('mouseleave', () => group.draggable = true);
+                }
+            });
+
+            document.getElementById(`m${internalId}_op`).addEventListener('change', (e) => {
+                const pipeObj = matrixPipeline.find(p => p.id === internalId);
+                if (pipeObj) {
+                    pipeObj.op = e.target.value;
+                    
+                    const invRow = document.getElementById(`m${internalId}_inv_row`);
+                    if(pipeObj.op !== 'multiply') {
+                        invRow.style.display = 'none';
+                        if(document.getElementById(`m${internalId}_toggle_invert`).checked) {
+                            document.getElementById(`m${internalId}_toggle_invert`).checked = false;
+                            handleMatrixInversionToggle(internalId, false);
+                        }
+                    } else {
+                        invRow.style.display = 'flex';
+                    }
+
+                    if (pipeObj.applied) {
+                        const targetSpace = calculateCompositeFromPipeline();
+                        startTransition(targetSpace);
+                    }
+                }
+            });
+
+            document.getElementById(`header-m${internalId}`).addEventListener('click', (e) => {
+                if(e.target.classList.contains('btn-remove') || e.target.classList.contains('op-select') || e.target.classList.contains('custom-label-input') || e.target.classList.contains('drag-handle') || e.target.closest('.switch') || e.target.closest('.invert-control-row')) return; 
+                toggleCollapseState(internalId);
+            });
+
+            document.getElementById(`btn-apply-m${internalId}`).addEventListener('click', () => {
+                applyTransformation(internalId);
+            });
+
+            document.getElementById(`btn-remove-m${internalId}`).addEventListener('click', () => {
+                removeMatrixBlock(internalId);
+            });
+
+            document.getElementById(`m${internalId}_toggle_invert`).addEventListener('change', (e) => {
+                handleMatrixInversionToggle(internalId, e.target.checked);
+            });
+
+            const gridInputs = [`m${internalId}_00`, `m${internalId}_01`, `m${internalId}_10`, `m${internalId}_11`];
+            gridInputs.forEach(inputId => {
+                document.getElementById(inputId).addEventListener('input', () => {
+                    handleLiveInputValueModification(internalId);
+                });
+            });
+
+            document.getElementById('btn-add-matrix').disabled = true;
+            document.querySelector('.controls').scrollTop = container.scrollHeight;
+            
+            calculateCompositeFromPipeline(); 
+        }
+
+        function handleLiveInputValueModification(id) {
+            const pipeObj = matrixPipeline.find(p => p.id === id);
+            if (!pipeObj || !pipeObj.applied) return; 
+
+            const invertToggle = document.getElementById(`m${id}_toggle_invert`);
+            if (invertToggle && invertToggle.checked) {
+                invertToggle.checked = false;
+                pipeObj.originalBackup = null; 
+                handleMatrixInversionToggle(id, true);
+                return;
+            }
+
+            const m_live = [
+                parseFloat(document.getElementById(`m${id}_00`).value) || 0,
+                parseFloat(document.getElementById(`m${id}_10`).value) || 0,
+                parseFloat(document.getElementById(`m${id}_01`).value) || 0,
+                parseFloat(document.getElementById(`m${id}_11`).value) || 0
+            ];
+
+            pipeObj.matrix = m_live;
+            const updatedSpace = calculateCompositeFromPipeline();
+            startTransition(updatedSpace);
+        }
+
+        function handleMatrixInversionToggle(id) {
+            const pipeObj = matrixPipeline.find(p => p.id === id);
+            if (!pipeObj) return;
+
+            const shouldInvert = document.getElementById(`m${id}_toggle_invert`).checked;
+            const input00 = document.getElementById(`m${id}_00`);
+            const input01 = document.getElementById(`m${id}_01`);
+            const input10 = document.getElementById(`m${id}_10`);
+            const input11 = document.getElementById(`m${id}_11`);
+
+            if (shouldInvert) {
+                const a = parseFloat(input00.value) || 0;
+                const b = parseFloat(input01.value) || 0;
+                const c = parseFloat(input10.value) || 0;
+                const d = parseFloat(input11.value) || 0;
+                const det = (a * d) - (b * c);
+
+                if (Math.abs(det) < 0.00001) {
+                    alert("Cannot invert this matrix! Space collapses.");
+                    document.getElementById(`m${id}_toggle_invert`).checked = false;
+                    return;
+                }
+
+                pipeObj.originalBackup = [a, b, c, d];
+                input00.value = parseFloat((d / det).toFixed(3));
+                input01.value = parseFloat((-b / det).toFixed(3));
+                input10.value = parseFloat((-c / det).toFixed(3));
+                input11.value = parseFloat((a / det).toFixed(3));
+            } else {
+                if (pipeObj.originalBackup) {
+                    input00.value = pipeObj.originalBackup[0];
+                    input01.value = pipeObj.originalBackup[1];
+                    input10.value = pipeObj.originalBackup[2];
+                    input11.value = pipeObj.originalBackup[3];
+                }
+            }
+
+            if (pipeObj.applied) {
+                pipeObj.matrix = [
+                    parseFloat(input00.value) || 0,
+                    parseFloat(input10.value) || 0,
+                    parseFloat(input01.value) || 0,
+                    parseFloat(input11.value) || 0
+                ];
+                const targetSpace = calculateCompositeFromPipeline();
+                startTransition(targetSpace);
+            } else {
+                // Fixed: Explicitly re-render formula string when an unapplied block is toggled so everything stays perfectly synced
+                calculateCompositeFromPipeline();
+            }
+        }
+
+        function toggleCollapseState(id) {
+            const pipeObj = matrixPipeline.find(p => p.id === id);
+            if(!pipeObj) return;
+
+            const content = document.getElementById(`content-m${id}`);
+            const arrow = document.getElementById(`arrow-m${id}`);
+
+            if (pipeObj.collapsed) {
+                content.style.maxHeight = "250px";
+                content.style.opacity = "1";
+                arrow.style.transform = "rotate(0deg)";
+                pipeObj.collapsed = false;
+            } else {
+                content.style.maxHeight = "0px";
+                content.style.opacity = "0";
+                arrow.style.transform = "rotate(-90deg)";
+                pipeObj.collapsed = true;
+            }
+        }
+
+        function reindexPipelineBlocks() {
+            for(let i = 0; i < matrixPipeline.length; i++){
+                matrixPipeline[i].displayIndex = i + 1;
+                const blockNode = document.getElementById(`group-m${matrixPipeline[i].id}`);
+                if(blockNode) {
+                    blockNode.querySelector('.display-index-label').innerHTML = `M<sub>${i+1}</sub>`;
+                }
+                const invertLabelNode = document.querySelector(`#group-m${matrixPipeline[i].id} .invert-control-row span`);
+                if(invertLabelNode) {
+                    invertLabelNode.innerHTML = `Invert Matrix Values (M<sub>${i+1}</sub><sup>-1</sup>)`;
+                }
+            }
+        }
+
+        function applyTransformation(id) {
+            const pipeObj = matrixPipeline.find(p => p.id === id);
+            if(!pipeObj) return;
+
+            pipeObj.matrix = [
+                parseFloat(document.getElementById(`m${id}_00`).value) || 0,
+                parseFloat(document.getElementById(`m${id}_10`).value) || 0,
+                parseFloat(document.getElementById(`m${id}_01`).value) || 0,
+                parseFloat(document.getElementById(`m${id}_11`).value) || 0
+            ];
+            pipeObj.applied = true;
+
+            const targetSpace = calculateCompositeFromPipeline();
+            startTransition(targetSpace);
+
+            document.getElementById(`btn-apply-m${id}`).disabled = true;
+            if(!pipeObj.collapsed) toggleCollapseState(id);
+            document.getElementById('btn-add-matrix').disabled = false;
+        }
+
+        function removeMatrixBlock(id) {
+            const pipelineIndex = matrixPipeline.findIndex(p => p.id === id);
+            if(pipelineIndex !== -1) matrixPipeline.splice(pipelineIndex, 1);
+
+            const DOMNode = document.getElementById(`group-m${id}`);
+            if(DOMNode) DOMNode.remove();
+
+            reindexPipelineBlocks();
+
+            const recomputedTargetSpace = calculateCompositeFromPipeline();
+            startTransition(recomputedTargetSpace);
+
+            const runningUnappliedBlock = matrixPipeline.find(p => p.applied === false);
+            document.getElementById('btn-add-matrix').disabled = (runningUnappliedBlock !== undefined || matrixPipeline.length === 0);
+            
+            if(matrixPipeline.length === 0) addNewMatrixBlock();
+        }
+
+        canvas.addEventListener('wheel', (event) => {
+            event.preventDefault(); 
+            const zoomIntensity = 0.1;
+            if (event.deltaY < 0) globalZoomScale += globalZoomScale * zoomIntensity;
+            else globalZoomScale -= globalZoomScale * zoomIntensity;
+
+            if(globalZoomScale < 0.05) globalZoomScale = 0.05;
+            if(globalZoomScale > 15.0) globalZoomScale = 15.0;
+
+            document.getElementById('zoom_readout').innerText = globalZoomScale.toFixed(2) + 'x';
+            draw();
+        }, { passive: false });
+
+        const controlModeSelector = document.getElementById('cfg_control_mode');
+        const speedRow = document.getElementById('row-engine-speed');
+        const scrubRow = document.getElementById('row-engine-scrub');
+        const scrubSlider = document.getElementById('cfg_scrub_slider');
+        const scrubReadout = document.getElementById('scrub_readout');
+
+        controlModeSelector.addEventListener('change', () => {
+            if(controlModeSelector.value === 'time') {
+                speedRow.style.display = 'flex';
+                scrubRow.style.display = 'none';
+            } else {
+                speedRow.style.display = 'none';
+                scrubRow.style.display = 'flex';
+                scrubSlider.value = animationProgress;
+                scrubReadout.innerText = parseFloat(scrubSlider.value).toFixed(2);
+            }
+        });
+
+        scrubSlider.addEventListener('input', () => {
+            if(controlModeSelector.value !== 'manual') return;
+            animationProgress = parseFloat(scrubSlider.value);
+            scrubReadout.innerText = animationProgress.toFixed(2);
+            updateMatrixInterpolation(animationProgress);
+            draw();
+        });
+
+        const speedSlider = document.getElementById('cfg_speed_slider');
+        const speedReadout = document.getElementById('speed_readout');
+        const instantCheckbox = document.getElementById('cfg_instant');
+
+        speedSlider.addEventListener('input', () => {
+            speedReadout.innerText = parseFloat(speedSlider.value).toFixed(2) + 'x';
+            if(instantCheckbox.checked) instantCheckbox.checked = false; 
+        });
+        
+        instantCheckbox.addEventListener('change', () => {
+            if(instantCheckbox.checked) speedReadout.innerText = 'Instant';
+            else speedReadout.innerText = parseFloat(speedSlider.value).toFixed(2) + 'x';
+        });
+
+        document.getElementById('cfg_show_ghost').addEventListener('change', (e) => {
+            document.getElementById('row-ghost-opacity').style.display = e.target.checked ? 'flex' : 'none';
+            document.getElementById('row-ghost-color-pick').style.display = e.target.checked ? 'flex' : 'none';
+            draw();
+        });
+
+        document.getElementById('cfg_grid_color').addEventListener('input', draw);
+        document.getElementById('cfg_opacity_active').addEventListener('input', draw);
+        document.getElementById('cfg_ghost_color').addEventListener('input', draw);
+        document.getElementById('cfg_opacity_ghost').addEventListener('input', draw);
+
+        document.getElementById('v_custom_x').addEventListener('input', draw);
+        document.getElementById('v_custom_y').addEventListener('input', draw);
+
+        document.getElementById('btn-add-matrix').addEventListener('click', () => { addNewMatrixBlock(); });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            matrixPipeline = [];
+            document.getElementById('matrix-container').innerHTML = '';
+            currentMatrix = [1, 0, 0, 1]; startMatrix = [1, 0, 0, 1]; targetMatrix = [1, 0, 0, 1];
+            globalZoomScale = 1.0; animationProgress = 1.0;
+            document.getElementById('zoom_readout').innerText = '1.00x';
+            scrubSlider.value = 1.00; scrubReadout.innerText = "1.00";
+            draw();
+            addNewMatrixBlock();
+        });
+
+        const precisionBtn = document.getElementById('toggle-precision');
+        precisionBtn.addEventListener('click', () => {
+            highPrecisionMode = !highPrecisionMode;
+            if (highPrecisionMode) {
+                precisionBtn.innerText = "Float Mode: On";
+                precisionBtn.classList.add('active');
+            } else {
+                precisionBtn.innerText = "Float Mode: Off";
+                precisionBtn.classList.remove('active');
+            }
+            runScratchpadCalculations();
+        });
+
+        document.getElementById('btn-scratch-calc').addEventListener('click', runScratchpadCalculations);
+
+        initDragAndDropSupport();
+        addNewMatrixBlock();
+        runScratchpadCalculations();
+        draw();
+    </script>
+</body>
+</html>
