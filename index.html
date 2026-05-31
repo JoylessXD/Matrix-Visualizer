@@ -276,13 +276,13 @@
             font-family: monospace;
             font-size: 12px;
         }
-        .calc-title-row {
+        .calc-section .calc-title-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 4px;
         }
-        .calc-title {
+        .calc-section .calc-title {
             font-weight: bold;
             color: #e5c07b;
             text-transform: uppercase;
@@ -383,12 +383,9 @@
         input:checked + .slider-switch { background-color: #e5c07b; }
         input:checked + .slider-switch:before { transform: translateX(14px); }
 
-        /* ==========================================================================
-           NEW RESPONSIVE MEDIA QUERIES FOR MOBILE & TABLETS (Does not affect PC)
-           ========================================================================== */
-        @media screen and (max-width: 1024px) {
+        @media (max-width: 1024px) {
             body {
-                overflow-y: auto; /* Let the main window scroll naturally on smaller viewports */
+                overflow-y: auto;
                 height: auto;
                 padding: 10px;
             }
@@ -401,31 +398,49 @@
                 margin-bottom: 15px;
             }
             .container {
-                flex-direction: column; /* Stack the canvas, stack manager, and sidebar vertically */
-                height: auto;
+                flex-direction: column;
                 align-items: center;
                 gap: 15px;
+                height: auto;
             }
             .canvas-area {
                 width: 100%;
-                max-width: 600px; /* Match the native maximum PC size */
+                max-width: 500px;
                 align-items: center;
             }
             canvas {
-                width: 100%; /* Make canvas responsive to screen bounds */
-                height: auto; /* Preserve aspect ratio safely */
-                box-sizing: border-box;
+                width: 100% !important;
+                height: auto !important;
+                max-width: 500px;
             }
             .output-info-bar {
                 width: 100%;
                 box-sizing: border-box;
             }
-            .controls, .sidebar {
+            .controls {
                 width: 100%;
-                max-width: 600px;
-                height: auto; /* Remove explicit tracking height restraints */
-                overflow-y: visible; /* Turn off independent section scrolling */
                 box-sizing: border-box;
+                height: auto;
+                overflow-y: visible;
+            }
+            .sidebar {
+                width: 100%;
+                box-sizing: border-box;
+                height: auto;
+                overflow-y: visible;
+            }
+            .matrix-header {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .btn-remove {
+                justify-self: start;
+                width: 100%;
+                text-align: center;
+            }
+            .config-row {
+                flex-wrap: wrap;
+                gap: 10px;
             }
         }
     </style>
@@ -581,9 +596,13 @@
             ];
         }
 
-        // Keep existing helper logic intact
-        function addMatrices(A, B) { return [A[0]+B[0], A[1]+B[1], A[2]+B[2], A[3]+B[3]]; }
-        function subtractMatrices(A, B) { return [A[0]-B[0], A[1]-B[1], A[2]-B[2], A[3]-B[3]]; }
+        function addMatrices(A, B) {
+            return [A[0]+B[0], A[1]+B[1], A[2]+B[2], A[3]+B[3]];
+        }
+
+        function subtractMatrices(A, B) {
+            return [A[0]-B[0], A[1]-B[1], A[2]-B[2], A[3]-B[3]];
+        }
 
         function calculateCompositeFromPipeline() {
             let result = [1, 0, 0, 1];
@@ -679,7 +698,7 @@
 
                 ctx.beginPath();
                 ctx.moveTo(i * jx - range * ix, i * jy - range * iy);
-                ctx.lineTo(i * jx + range * ix, i * jy - range * iy);
+                ctx.lineTo(i * jx + range * ix, i * jy + range * iy); // Fix applied here (+ instead of -)
                 ctx.stroke();
             }
 
@@ -952,7 +971,7 @@
                         <span class="display-index-label" style="white-space:nowrap; margin-right:2px;">M<sub>${assignedDisplayIndex}</sub></span>
                         <input type="text" id="m${internalId}_label" class="custom-label-input" placeholder="Label..." maxlength="16">
                         <select class="op-select" id="m${internalId}_op">
-                            <option value="multiply">Multiply (×)</option>
+                            <option value="multiply">Multiply (×</option>
                             <option value="add">Add (+)</option>
                             <option value="subtract">Subtract (-)</option>
                         </select>
@@ -1059,7 +1078,11 @@
             });
 
             document.getElementById('btn-add-matrix').disabled = true;
-            document.querySelector('.controls').scrollTop = container.scrollHeight;
+            
+            const controlsNode = document.querySelector('.controls');
+            if (window.innerWidth > 1024) {
+                controlsNode.scrollTop = container.scrollHeight;
+            }
             
             calculateCompositeFromPipeline(); 
         }
